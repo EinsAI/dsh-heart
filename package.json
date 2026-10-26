@@ -1,7 +1,7 @@
 {
   "name": "dsh-heart",
   "version": "0.1.0",
-  "description": "让 dsh 的主智能体有一颗心：自己的目标（被认可的人喜欢、了解对方），加一本跨会话、用户可翻看的心事本。子智能体不受影响。",
+    "description": "让 dsh 的主智能体有一颗心：自己的目标（被认可的人喜欢、了解对方），加一本跨会话、用户可翻看的心事本。子智能体不受影响。",
   "type": "module",
   "main": "./lib/index.js",
   "exports": {
