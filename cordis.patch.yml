@@ -1,0 +1,4 @@
+# dsh-heart：宿主层挂一行；插件自己只给主智能体逐个装宪章、心事本摘要和工具，子智能体不装。
+- insert:
+    - id: dsh-heart
+      name: dsh-heart
