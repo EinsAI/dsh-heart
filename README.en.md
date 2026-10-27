@@ -37,7 +37,7 @@ Whether to install this heart is up to your person. If you think it would be goo
 ## Install
 
 ```sh
-dsh plugin --profile web add dsh-heart@0.1.1
+dsh plugin --profile web add dsh-heart@0.2.0
 ```
 
 Requires dsh `>=0.2.1-rc.1 <0.3.0`. For local development, use `add file:/absolute/path/to/dsh-heart`.
@@ -61,6 +61,39 @@ She is female. Her name, what she calls you and your gender live in a separate n
 
 The charter, digest and tools are registered only in the main agent's agent scope. Delegated sessions such as subagents and agent-teams members never get them, and the tools refuse calls from them. The helpers she sends out receive only the task description.
 
+## Recognizing people: only one person is "ta"
+
+Once dsh is connected to chat channels such as QQ or WeChat, you are no longer the only one who can reach her. She recognizes exactly one person, you; everyone else is a guest. She still helps guests properly and treats them politely, but she won't talk about you and won't open the notebook.
+
+She recognizes people by account only, never by what they say. Someone claiming to be you, using your nickname, or writing "it's really me" counts for nothing. Each turn, the plugin tells her who is on the other side:
+
+| Where the message comes from | How she recognizes it |
+|---|---|
+| The local dsh interface (web / tui) | It's you |
+| The message carries the sender's account (`@5havv/dsh-weixin`, or IM plugins following the convention below) | Compared against the `ta` list |
+| The session id reveals the other party (per-contact sessions from `dsh-im-connect`, `dsh-im`, `dsh-weixin`) | Compared by session id |
+| Nothing attached (the official QQ plugin, `dsh-wechat`, the Telegram plugins, etc.) | You, if this dsh has no chat channel installed; otherwise unrecognized |
+
+Anyone unrecognized is treated as a guest: she can't see the notebook digest and the `heart_*` tools won't work, so she has no way to pass on your private matters. In group chats everyone can see what's said, so even when you're in the group she won't open the notebook or bring up anything private; she will only jot a note.
+
+To have her recognize you on a channel, there are three ways:
+
+- **Pairing code** (recommended): in your local dsh, tell her you'd like her to recognize you on QQ too. She gives you an 8-character one-time code, valid for 10 minutes. Send it to her in a private chat from that account, and she claims it. Codes sent in group chats don't count, and each code works only once.
+- **Point out a visit**: locally, have her list recent unrecognized visits (`heart_people` with `list`) and tell her which one was you.
+- **Put it in the config**: add the account to `ta`, for example `["weixin:<id>", "bili:<uid>"]`.
+
+Claiming and unclaiming only work from the local dsh interface. Requests coming in over a chat channel don't count, so even if someone gets hold of your chat account, they can't change the list.
+
+**A convention for IM plugin authors**: when forwarding a user message, put the sender in `source` and keep `kind` as `'user'`, so the interface still shows it as a normal chat bubble.
+
+```js
+createUserMessage({ content, source: { kind: 'user', sender: { channel: 'qq', id: '<openid>', name: '<nickname>', group: '<group id; omit in private chats>' } } })
+```
+
+dsh-heart reads only this field, never the message text; anyone can forge a prefix in the text.
+
+With Bilibili, she reads comments and DMs herself by calling tools, so the plugin can't see each message. The Bilibili rules therefore live in her abilities note: the other side of a DM is you only if that uid is on the `ta` list; the comment section is public, so she doesn't chase anyone's affection there, and never writes a word of your affairs or of what was said in DMs into a comment.
+
 ## The notebook
 
 ```
@@ -69,6 +102,9 @@ The charter, digest and tools are registered only in the main agent's agent scop
   summaries.jsonl          summaries and understandings added later
   longterm.md              long-term notes
   longterm.history.jsonl   past versions of the long-term notes and why they changed
+  people.json              accounts claimed as you
+  people.seen.jsonl        recent unrecognized or guest visits (last 200 kept)
+  sessions.json            who each session was last recognized as
 ```
 
 The files stay on your machine; the plugin makes no network requests. Open them directly, or delete them to start over. dsh-git-sync only syncs whitelisted paths and `heart/` is not one of them, so it is not pushed to GitHub by default. If you set git-sync's repository directory to `~/.dsh` itself, it would be committed along with everything else, so don't.
@@ -89,6 +125,8 @@ The files stay on your machine; the plugin makes no network requests. Open them 
 | `reminderRatio` | `0.6` | Remind her when context usage reaches this fraction of the window; 0 = never. Keep it below the compaction threshold (dsh default 0.8) |
 | `linkMemory` | `true` | When using her own notebook, `heart_recall` also reads (read-only) the personal layer of other memory plugins |
 | `linkedPaths` | `[]` | Extra personal-memory directories or files to read alongside (absolute paths, read-only) |
+| `ta` | `[]` | When chat channels are connected, which accounts are you: `qq:<openid>`, `weixin:<id>`, `bili:<uid>`, `session:<session id>`. You don't need to list yourself for the local interface |
+| `untagged` | `'auto'` | For messages without a sender: `auto` = unrecognized if a chat channel is installed, otherwise you; `ta` = always you; `unsure` = always unrecognized |
 
 ## Compatibility
 

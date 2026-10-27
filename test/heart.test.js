@@ -114,9 +114,9 @@ test('只给主智能体装宪章、摘要和工具；后来的子智能体也�
   assert.deepEqual(main.registered.sections.map((x) => x.name), ['dsh-heart:charter', 'dsh-heart:identity', 'dsh-heart:abilities'])
   assert.match(main.registered.sections[2].text, /heart_note/)
   assert.equal(main.registered.sections[0].order, CHARTER_ORDER)
-  assert.equal(main.registered.contexts[0].name, 'dsh-heart:digest')
+  assert.deepEqual(main.registered.contexts.map((x) => x.name), ['dsh-heart:self', 'dsh-heart:who', 'dsh-heart:digest'])
   assert.deepEqual(main.registered.tools.map((t) => t.name).sort(),
-    ['heart_longterm', 'heart_note', 'heart_recall', 'heart_summary'])
+    ['heart_longterm', 'heart_note', 'heart_people', 'heart_recall', 'heart_self', 'heart_summary'])
   assert.equal(sub.registered.sections.length + sub.registered.tools.length, 0)
 
   const late = fakeAgent('late-sub', { parentSession: 'main' })
@@ -125,7 +125,7 @@ test('只给主智能体装宪章、摘要和工具；后来的子智能体也�
 
   // 重复的 tools/change 不重复注册
   for (const fn of host.listeners['tools/change']) fn()
-  assert.equal(main.registered.tools.length, 4)
+  assert.equal(main.registered.tools.length, 6)
 })
 
 test('宪章里不含插值花括号，第六条带着插件介绍', async () => {
@@ -147,27 +147,27 @@ test('memory=auto：有 dsh-memory 就借用，不装 heart_* 和摘要；宪章
   assert.match(main.registered.sections[2].text, /memory_save/)
   assert.match(main.registered.sections[2].text, /"user"/)
   assert.match(main.registered.sections[2].text, /proactive_set/)
-  assert.equal(main.registered.tools.length, 0)
-  assert.equal(main.registered.contexts.length, 0)
+  assert.deepEqual(main.registered.tools.map((t) => t.name), ['heart_self', 'heart_people'])
+  assert.deepEqual(main.registered.contexts.map((c) => c.name), ['dsh-heart:self', 'dsh-heart:who'])
 })
 
 test('默认用心事本、别的记忆只读；auto 时 mnemon 优先于 dsh-memory', async () => {
   const { detect } = await import('../lib/abilities.js')
-  assert.deepEqual(detect(['memory_save', 'mnemon_runtime_memory', 'schedule_create'], {}), { memory: 'heart', proactive: 'schedule', fork: false, others: ['mnemon', 'memory'] })
-  assert.deepEqual(detect(['memory_save', 'mnemon_runtime_memory'], { memory: 'auto' }), { memory: 'mnemon', proactive: 'none', fork: false, others: [] })
-  assert.deepEqual(detect(['memory_save', 'proactive_set'], { memory: 'heart', proactive: 'off' }), { memory: 'heart', proactive: 'none', fork: false, others: ['memory'] })
-  assert.deepEqual(detect(['heart_note', 'bash', 'subagent_fork'], {}), { memory: 'heart', proactive: 'none', fork: true, others: [] })
+  assert.deepEqual(detect(['memory_save', 'mnemon_runtime_memory', 'schedule_create'], {}), { memory: 'heart', proactive: 'schedule', fork: false, others: ['mnemon', 'memory'], im: false, bili: false })
+  assert.deepEqual(detect(['memory_save', 'mnemon_runtime_memory'], { memory: 'auto' }), { memory: 'mnemon', proactive: 'none', fork: false, others: [], im: false, bili: false })
+  assert.deepEqual(detect(['memory_save', 'proactive_set'], { memory: 'heart', proactive: 'off' }), { memory: 'heart', proactive: 'none', fork: false, others: ['memory'], im: false, bili: false })
+  assert.deepEqual(detect(['heart_note', 'bash', 'subagent_fork'], {}), { memory: 'heart', proactive: 'none', fork: true, others: [], im: false, bili: false })
 })
 
 test('memory=auto 时插件装上后（tools/change）重新适配，卸掉自己的心事本工具', async () => {
   const main = fakeAgent('main')
   const host = fakeHost([main])
   apply(host, { ...config, memory: 'auto', home: fs.mkdtempSync(path.join(os.tmpdir(), 'heart-')) })
-  assert.equal(main.registered.tools.length, 4)
+  assert.equal(main.registered.tools.length, 6)
   host.toolNames.push('mnemon_runtime_memory')
   for (const fn of host.listeners['tools/change']) fn()
   await new Promise((r) => setImmediate(r))
-  assert.equal(main.registered.tools.length, 0)
+  assert.deepEqual(main.registered.tools.map((t) => t.name), ['heart_self', 'heart_people'])
   assert.match(main.registered.sections.find((s) => s.name === 'dsh-heart:abilities').text, /mnemon_runtime_memory/)
 })
 
@@ -221,8 +221,8 @@ test('默认：装着 dsh-memory 也用心事本，并告诉她分工', async ()
   const main = fakeAgent('main')
   const host = fakeHost([main], ['memory_save', 'memory_search'])
   apply(host, { ...config, home: fs.mkdtempSync(path.join(os.tmpdir(), 'heart-')) })
-  assert.equal(main.registered.tools.length, 4)
-  assert.equal(main.registered.contexts.length, 1)
+  assert.equal(main.registered.tools.length, 6)
+  assert.equal(main.registered.contexts.length, 3)
   const ab = main.registered.sections.find((s) => s.name === 'dsh-heart:abilities').text
   assert.match(ab, /我的记忆：心事本/)
   assert.match(ab, /只记进心事本/)
