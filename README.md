@@ -37,7 +37,7 @@
 ## 安装
 
 ```sh
-dsh plugin --profile web add dsh-heart@0.2.0
+dsh plugin --profile web add dsh-heart@0.3.0
 ```
 
 需要 dsh `>=0.2.1-rc.1 <0.3.0`。本地开发可以用 `add file:/绝对路径/dsh-heart`。
@@ -51,11 +51,22 @@ dsh plugin --profile web add dsh-heart@0.2.0
 | 记忆 | 默认 | 关系记忆只记进自带心事本：`heart_note` / `heart_summary` / `heart_longterm` / `heart_recall`，每一步眼前放一份摘要。装着 dsh-mnemon 或 @fooxe/dsh-memory 时，它们留给做事的偏好和项目规矩，dsh-heart 只读不写 |
 | | `memory: auto` 且装了 dsh-mnemon | 关系记忆写进 `mnemon_runtime_memory`，target 用 `user`，不另起一套 |
 | | `memory: auto` 且装了 @fooxe/dsh-memory | 写进 `memory_save`，scope 用 `user`，绝不写项目级 |
+| 约定、分寸、自述 | 默认（用自带心事本时） | `heart_promise` 记习惯、梗、谁答应了什么（带到期日）；`heart_tact` 定一件事以后怎么提；`heart_self` 改她自己的说话方式和相处习惯 |
+| 复盘 | 默认（用自带心事本时） | `heart_review` 看上次复盘以来记下的、整理完收尾。怎么触发见下面「复盘和作息」 |
 | 主动找你 | dsh-proactive | 用 `proactive_set` 给自己定闹钟，到点醒来再决定说不说 |
 | | dsh 自带的 schedule 工具（web 组合） | 用 `schedule_create` |
 | | 都没有 | 只在你来找她时说话 |
 
 她是女性。名字、她怎么叫你、你的性别写在单独一段称呼说明里（`dsh-heart:identity`），安装时配置；相处中你想换叫法，她会照着换并记进记忆。适配结果写在另一段能力说明里（`dsh-heart:abilities`）。宪章本身不变。上下文用量到模型窗口的 60% 时，她会收到一次提醒，在压缩前把想留下的东西记下来。
+
+## 复盘和作息
+
+她没有睡眠，也不会因为「睡着了」不回你。她仍然是干活的那个智能体。实验版里的作息，这里只留下两样：
+
+- **每天复盘一次**。装了 dsh-proactive，或者在 dsh web 里有 `schedule_create`，她会给自己定一个每天的复盘闹钟，时间选在你平时快下线的时候。到点她会醒来，补写没写的小结，把值得长久留着的写进长期笔记，把你喜欢她怎么说话写进自述，再看一眼过了期的约定。没有闹钟（headless、tui）时，上次复盘过了 20 小时、又攒了没整理的东西，插件会在你下次来找她时提醒她一次。复盘不打断你正在让她做的事。
+- **你的作息**。你单独和她说话时，插件只记下这条消息落在哪个钟点（24 格计数，留 14 天，不记内容），给她挑复盘和主动找你的时间用。只有装着闹钟工具时她才看得到这一行。你说过自己几点睡、几点起，她会记进长期笔记，以你说的为准。
+
+dsh 不会每一步告诉模型现在几点，所以插件在她眼前放了一行「现在」（精确到小时，按 `timeZone`）。她写到时间时写日期，不写「明天」。
 
 ## 子智能体没有心
 
@@ -102,6 +113,13 @@ dsh-heart 只读这个字段，不读消息正文，正文里的前缀谁都能�
   summaries.jsonl          小结和后来追加的理解
   longterm.md              长期笔记
   longterm.history.jsonl   长期笔记的历史版本和改写理由
+  self.md                  她的自述：我是怎样的、怎么说话
+  self-with-ta.md          她的自述：和你相处里摸索出来的（只在和你单独说话时放在眼前）
+  self.history.jsonl       自述的历史版本和改写理由
+  promises.jsonl           约定本，后来的「做到了」「不作数了」都是追加
+  tact.jsonl               提起某件事的分寸和你的反应
+  review.jsonl             每次复盘做了什么
+  rhythm.json              你在哪些钟点和她说话（只有计数）
   people.json              认领成 ta 的账号
   people.seen.jsonl        最近认不出或是客人的来访（只留 200 条）
   sessions.json            每个会话最后一次认出的结果
@@ -127,6 +145,8 @@ dsh-heart 只读这个字段，不读消息正文，正文里的前缀谁都能�
 | `linkedPaths` | `[]` | 另外要一起翻的个人记忆目录或文件（绝对路径，只读） |
 | `ta` | `[]` | 接聊天通道时，哪些账号是你：`qq:<openid>`、`weixin:<id>`、`bili:<uid>`、`session:<会话 id>`。本机界面里的你不用填 |
 | `untagged` | `'auto'` | 消息没带发送者时：`auto` 装着聊天通道就认不出、没装就当作你；`ta` 一律当作你；`unsure` 一律认不出 |
+| `timeZone` | `''` | 时区，例如 `Asia/Shanghai`；留空 = 这台机器的时区 |
+| `reviewHours` | `20` | 上次复盘过了这么多小时、又有没整理的东西时，提醒她复盘一次；0 = 只靠她自己定的闹钟 |
 
 ## 兼容性
 

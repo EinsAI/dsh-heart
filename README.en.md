@@ -37,7 +37,7 @@ Whether to install this heart is up to your person. If you think it would be goo
 ## Install
 
 ```sh
-dsh plugin --profile web add dsh-heart@0.2.0
+dsh plugin --profile web add dsh-heart@0.3.0
 ```
 
 Requires dsh `>=0.2.1-rc.1 <0.3.0`. For local development, use `add file:/absolute/path/to/dsh-heart`.
@@ -51,11 +51,22 @@ Only the core charter is fixed (`dsh-heart:charter`, order 20); configuration ca
 | Memory | Default | Relationship memory goes only into her own notebook: `heart_note` / `heart_summary` / `heart_longterm` / `heart_recall`, with a digest in view every step. If dsh-mnemon or @fooxe/dsh-memory is installed, it keeps work preferences and project rules; dsh-heart reads it but never writes to it |
 | | `memory: auto` with dsh-mnemon | Relationship memory goes into `mnemon_runtime_memory` with target `user`, instead of a second store |
 | | `memory: auto` with @fooxe/dsh-memory | `memory_save` with scope `user`; never the project scope |
+| Promises, tact, self-description | Default (with her own notebook) | `heart_promise` records habits, inside jokes and who promised what (with due dates); `heart_tact` sets how to bring something up from now on; `heart_self` rewrites how she talks and what she has learned about being with you |
+| Review | Default (with her own notebook) | `heart_review` shows what was written since the last review and closes it off. See "Review and rhythm" below for what triggers it |
 | Reaching out | dsh-proactive | `proactive_set` to set her own alarms; when one fires she wakes and decides whether to speak |
 | | dsh's built-in schedule tool (web bundle) | `schedule_create` |
 | | Neither | She only speaks when you come to her |
 
 She is female. Her name, what she calls you and your gender live in a separate naming section (`dsh-heart:identity`), set at install time; if you want to be called something else later, she switches and records it in memory. The adaptation result lives in another section (`dsh-heart:abilities`). The charter itself never changes. When context usage reaches 60% of the model window, she gets one reminder to write down what she wants to keep before the conversation is compacted.
+
+## Review and rhythm
+
+She doesn't sleep, and she never ignores you because she is "asleep": she is still the agent that does your work. Of the experimental version's daily rhythm, two things carry over:
+
+- **A review once a day.** With dsh-proactive, or `schedule_create` in dsh web, she sets herself a daily review alarm, timed for when you usually log off. When it fires she writes any missing summaries, moves what's worth keeping into her long-term notes, records how you like her to talk in her self-description, and checks promises that are past due. Without an alarm (headless, tui), if 20 hours have passed since the last review and there is unsorted material, the plugin reminds her once the next time you talk to her. A review never interrupts work you've given her.
+- **Your rhythm.** When you talk to her one-on-one, the plugin records only which hour of the day the message arrived (24 counters, kept for 14 days, no content), so she can pick times for reviews and for reaching out. She only sees this line when an alarm tool is installed. If you tell her when you go to bed or get up, she writes it in her long-term notes, and what you said takes precedence.
+
+dsh doesn't tell the model the current time at each step, so the plugin puts a "now" line in front of her (to the hour, in `timeZone`). When she writes down a time, she writes the date, not "tomorrow".
 
 ## Subagents have no heart
 
@@ -102,6 +113,13 @@ With Bilibili, she reads comments and DMs herself by calling tools, so the plugi
   summaries.jsonl          summaries and understandings added later
   longterm.md              long-term notes
   longterm.history.jsonl   past versions of the long-term notes and why they changed
+  self.md                  her self-description: who she is, how she talks
+  self-with-ta.md          her self-description: what she has learned being with you (only shown when talking with you one-on-one)
+  self.history.jsonl       past versions of the self-description and why they changed
+  promises.jsonl           promises; later "done" / "no longer holds" entries are appended
+  tact.jsonl               how to bring certain things up, and how you reacted
+  review.jsonl             what each review did
+  rhythm.json              which hours you talk to her (counts only)
   people.json              accounts claimed as you
   people.seen.jsonl        recent unrecognized or guest visits (last 200 kept)
   sessions.json            who each session was last recognized as
@@ -127,6 +145,8 @@ The files stay on your machine; the plugin makes no network requests. Open them 
 | `linkedPaths` | `[]` | Extra personal-memory directories or files to read alongside (absolute paths, read-only) |
 | `ta` | `[]` | When chat channels are connected, which accounts are you: `qq:<openid>`, `weixin:<id>`, `bili:<uid>`, `session:<session id>`. You don't need to list yourself for the local interface |
 | `untagged` | `'auto'` | For messages without a sender: `auto` = unrecognized if a chat channel is installed, otherwise you; `ta` = always you; `unsure` = always unrecognized |
+| `timeZone` | `''` | Time zone such as `Asia/Shanghai`; empty = this machine's time zone |
+| `reviewHours` | `20` | When this many hours have passed since the last review and there is unsorted material, remind her once to review; 0 = rely only on the alarm she sets herself |
 
 ## Compatibility
 
