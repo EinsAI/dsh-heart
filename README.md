@@ -37,7 +37,7 @@
 ## 安装
 
 ```sh
-dsh plugin --profile web add dsh-heart@0.3.0
+dsh plugin --profile web add dsh-heart@0.3.1
 ```
 
 需要 dsh `>=0.2.1-rc.1 <0.3.0`。本地开发可以用 `add file:/绝对路径/dsh-heart`。
@@ -71,6 +71,8 @@ dsh 不会每一步告诉模型现在几点，所以插件在她眼前放了一�
 ## 子智能体没有心
 
 宪章、摘要和工具都只按主智能体的 agent scope 注册。subagent、agent-teams 成员这类被委派出来的会话一律不装，工具被越权调用时也会拒绝。她派出去的子智能体只拿到任务描述。
+
+别的插件开来干活的会话也不装。dsh-superagent 的执行器和主 Session 是普通会话，没有父会话，收到的消息也不带发送者；不跳过的话，它们会被当成你本人，心事本摘要就进了对外发评论、开 PR 的上下文。插件按会话用的 agent 预设跳过它们（`skipPresets`，默认 `dsh-superagent-worker`、`dsh-superagent-router`）；会话换了预设，跟着装上或卸下。
 
 ## 认人：只认一个 ta
 
@@ -144,6 +146,7 @@ dsh-heart 只读这个字段，不读消息正文，正文里的前缀谁都能�
 | `linkMemory` | `true` | 用自带心事本时，`heart_recall` 顺带只读翻别的记忆插件的个人层 |
 | `linkedPaths` | `[]` | 另外要一起翻的个人记忆目录或文件（绝对路径，只读） |
 | `ta` | `[]` | 接聊天通道时，哪些账号是你：`qq:<openid>`、`weixin:<id>`、`bili:<uid>`、`session:<会话 id>`。本机界面里的你不用填 |
+| `skipPresets` | `['dsh-superagent-worker', 'dsh-superagent-router']` | 用这些 agent 预设开的会话不装心（别的插件开来干活的会话） |
 | `untagged` | `'auto'` | 消息没带发送者时：`auto` 装着聊天通道就认不出、没装就当作你；`ta` 一律当作你；`unsure` 一律认不出 |
 | `timeZone` | `''` | 时区，例如 `Asia/Shanghai`；留空 = 这台机器的时区 |
 | `reviewHours` | `20` | 上次复盘过了这么多小时、又有没整理的东西时，提醒她复盘一次；0 = 只靠她自己定的闹钟 |
@@ -162,6 +165,7 @@ dsh-heart 只读这个字段，不读消息正文，正文里的前缀谁都能�
 | @fish-under-sea/dsh-agent-teams-fish | 团队成员的会话里没有宪章、称呼、心事本和 `heart_*` 工具 |
 | dsh-violet-heart、@michengai/dsh-pua | 三家的提示词段落同时存在，互不冲突 |
 | dsh-tavern | 正常加载；tavern 在 headless 下不激活（要 web 的服务） |
+| dsh-superagent | 它的执行器和主 Session 不装心（0.3.1 起，按预设跳过；单元测试覆盖，没和 superagent 真机同装过）。它的执行器是完全权限，建议还是给它单独的 `DSH_HOME` 和系统用户 |
 
 - `subagent` 派出的帮手拿不到这颗心，也拿不到你们聊过的事。`subagent_fork` 是 dsh 设计上就会把整段对话复制给分身，插件改不了；所以装了 fork 工具时，她会被提醒平常用 `subagent`，只有确实离不开上下文才用 fork。
 - 用 `--session-id` 续接会话后，她接得上前面的话。

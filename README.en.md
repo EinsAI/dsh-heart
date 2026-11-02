@@ -37,7 +37,7 @@ Whether to install this heart is up to your person. If you think it would be goo
 ## Install
 
 ```sh
-dsh plugin --profile web add dsh-heart@0.3.0
+dsh plugin --profile web add dsh-heart@0.3.1
 ```
 
 Requires dsh `>=0.2.1-rc.1 <0.3.0`. For local development, use `add file:/absolute/path/to/dsh-heart`.
@@ -71,6 +71,8 @@ dsh doesn't tell the model the current time at each step, so the plugin puts a "
 ## Subagents have no heart
 
 The charter, digest and tools are registered only in the main agent's agent scope. Delegated sessions such as subagents and agent-teams members never get them, and the tools refuse calls from them. The helpers she sends out receive only the task description.
+
+Work sessions opened by other plugins don't get it either. dsh-superagent's executor and main Sessions are ordinary sessions with no parent, and their messages carry no sender; without skipping them they would be taken for you, and the notebook digest would land in a context that posts comments and opens pull requests. The plugin skips them by the session's agent preset (`skipPresets`, default `dsh-superagent-worker`, `dsh-superagent-router`), and installs or removes itself when a session switches preset.
 
 ## Recognizing people: only one person is "ta"
 
@@ -144,6 +146,7 @@ The files stay on your machine; the plugin makes no network requests. Open them 
 | `linkMemory` | `true` | When using her own notebook, `heart_recall` also reads (read-only) the personal layer of other memory plugins |
 | `linkedPaths` | `[]` | Extra personal-memory directories or files to read alongside (absolute paths, read-only) |
 | `ta` | `[]` | When chat channels are connected, which accounts are you: `qq:<openid>`, `weixin:<id>`, `bili:<uid>`, `session:<session id>`. You don't need to list yourself for the local interface |
+| `skipPresets` | `['dsh-superagent-worker', 'dsh-superagent-router']` | Sessions opened with these agent presets get no heart (work sessions opened by other plugins) |
 | `untagged` | `'auto'` | For messages without a sender: `auto` = unrecognized if a chat channel is installed, otherwise you; `ta` = always you; `unsure` = always unrecognized |
 | `timeZone` | `''` | Time zone such as `Asia/Shanghai`; empty = this machine's time zone |
 | `reviewHours` | `20` | When this many hours have passed since the last review and there is unsorted material, remind her once to review; 0 = rely only on the alarm she sets herself |
@@ -162,6 +165,7 @@ Each combination below was installed with `dsh plugin add` and tested on dsh 0.2
 | @fish-under-sea/dsh-agent-teams-fish | Team members' sessions contain no charter, naming, notebook or `heart_*` tools |
 | dsh-violet-heart, @michengai/dsh-pua | All three plugins' prompt sections are present together without conflict |
 | dsh-tavern | Loads normally; tavern does not activate under headless (it needs web services) |
+| dsh-superagent | Its executor and main Sessions get no heart (from 0.3.1, skipped by preset; covered by unit tests, not yet run on a real install alongside superagent). Its executors run with full access, so a separate `DSH_HOME` and OS user for it is still recommended |
 
 - Helpers sent with `subagent` get neither this heart nor what you talked about. `subagent_fork` copies the whole conversation to the fork by dsh's design, which a plugin cannot change; so when the fork tool is present she is reminded to use `subagent` normally and fork only when the task truly needs the earlier context.
 - After resuming a session with `--session-id`, she picks up where you left off.

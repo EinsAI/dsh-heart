@@ -228,3 +228,45 @@ test('默认：装着 dsh-memory 也用心事本，并告诉她分工', async ()
   assert.match(ab, /只记进心事本/)
   assert.match(ab, /memory_save/)
 })
+
+test('dsh-superagent 开的执行器和主 Session 不装心；换了预设按新预设装卸', async () => {
+  const main = fakeAgent('main')
+  const worker = fakeAgent('worker-T1', { agentPreset: 'dsh-superagent-worker' })
+  const router = fakeAgent('orchestrator-x', { agentPreset: 'dsh-superagent-router' })
+  const host = fakeHost([main, worker, router])
+  apply(host, { ...config, home: fs.mkdtempSync(path.join(os.tmpdir(), 'heart-')) })
+  assert.ok(main.registered.tools.length > 0)
+  for (const a of [worker, router]) {
+    assert.equal(a.registered.sections.length + a.registered.contexts.length + a.registered.tools.length, 0)
+  }
+
+  // 后来才建的执行器也不装
+  const late = fakeAgent('worker-T2', { agentPreset: 'dsh-superagent-worker' })
+  for (const fn of host.listeners['agent/created']) await fn({ agent: late })
+  assert.equal(late.registered.sections.length, 0)
+
+  // 会话投影比会话头新：网页上打开时选成了默认预设，superagent 又换回自己的
+  const projections = new Map([[main.session, 'dsh-superagent-worker']])
+  const host2 = fakeHost([main])
+  const services = { sessionProjections: { stateOf: (session, key) => key === 'agentPreset' ? projections.get(session) : undefined } }
+  const get = host2.get
+  host2.get = (name) => services[name] ?? get(name)
+  const fresh = fakeAgent('fresh')
+  host2.get('agents').list = () => [fresh]
+  apply(host2, { ...config, home: fs.mkdtempSync(path.join(os.tmpdir(), 'heart-')) })
+  assert.ok(fresh.registered.tools.length > 0)
+  projections.set(fresh.session, 'dsh-superagent-router')
+  for (const fn of host2.listeners['agent-preset/selected']) fn('fresh', 'dsh-superagent-router')
+  assert.equal(fresh.registered.tools.length, 0)
+  projections.set(fresh.session, 'standard')
+  for (const fn of host2.listeners['agent-preset/selected']) fn('fresh', 'standard')
+  assert.ok(fresh.registered.tools.length > 0)
+})
+
+test('skipPresets 可配：清空就照常装', () => {
+  const worker = fakeAgent('worker-T1', { agentPreset: 'dsh-superagent-worker' })
+  const mine = fakeAgent('w', { agentPreset: 'my-worker' })
+  apply(fakeHost([worker, mine]), { ...config, skipPresets: ['my-worker'], home: fs.mkdtempSync(path.join(os.tmpdir(), 'heart-')) })
+  assert.ok(worker.registered.tools.length > 0)
+  assert.equal(mine.registered.tools.length, 0)
+})
